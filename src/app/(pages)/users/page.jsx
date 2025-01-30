@@ -14,8 +14,6 @@
 
 // export default UsersDetail;
 
-
-
 'use client';
 import { useEffect, useState } from 'react';
 
@@ -26,10 +24,20 @@ const Dashboard = () => {
   const [roles, setRoles] = useState([]);
   const [formData, setFormData] = useState({});
   const [previewImage, setPreviewImage] = useState('');
-  const [newRole, setNewRole] = useState({ name: '', permissions: [] });
+  const [roleFormData, setRoleFormData] = useState({ 
+    name: '', 
+    description: '', 
+    status: 'true' 
+  });
+  const [errors, setErrors] = useState({});
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    fetchUserProfile();
+    const fetchInitialData = async () => {
+      await fetchUserProfile();
+      await fetchAllRoles();
+    };
+    fetchInitialData();
   }, []);
 
   const fetchUserProfile = async () => {
@@ -44,6 +52,7 @@ const Dashboard = () => {
       setFormData(data.user);
     } catch (error) {
       console.error('Error fetching profile:', error);
+      setErrors({ general: 'Failed to load profile' });
     }
   };
 
@@ -51,22 +60,32 @@ const Dashboard = () => {
     e.preventDefault();
     try {
       const token = localStorage.getItem('token');
-      const formData = new FormData();
-      Object.entries(formData).forEach(([key, value]) => {
-        formData.append(key, value);
-      });
+      const formDataObj = new FormData();
       
+      if (formData.name) formDataObj.append('name', formData.name);
+      if (formData.email) formDataObj.append('email', formData.email);
+      if (formData.profileImage) {
+        formDataObj.append('profileImage', formData.profileImage);
+      }
+
       const response = await fetch('http://localhost:8000/api/user/profile-update/', {
         method: 'PUT',
         credentials:"include",
         headers: { Authorization: `Bearer ${token}` },
-        body: formData,
+        body: formDataObj,
       });
       
       const data = await response.json();
+      if (!response.ok) {
+        setErrors(data.errors || { general: data.error });
+        return;
+      }
+
       setUser(data.updatedUser);
+      setErrors({});
     } catch (error) {
       console.error('Update error:', error);
+      setErrors({ general: 'Failed to update profile' });
     }
   };
 
@@ -80,6 +99,7 @@ const Dashboard = () => {
 
   const fetchAllUsers = async () => {
     try {
+      setLoading(true);
       const token = localStorage.getItem('token');
       const response = await fetch('http://localhost:8000/api/user/get-all-users', {
         credentials:"include",
@@ -89,13 +109,21 @@ const Dashboard = () => {
       setUsers(data.data);
     } catch (error) {
       console.error('Error fetching users:', error);
+      setErrors({ general: 'Failed to load users' });
+    } finally {
+      setLoading(false);
     }
   };
 
   const handleRoleChange = async (userId, roleId) => {
     try {
+      if (!userId || !roleId) {
+        setErrors({ general: 'Both User ID and Role ID are required' });
+        return;
+      }
+      
       const token = localStorage.getItem('token');
-      await fetch('http://localhost:8000/api/user/change-user-role', {
+      const response = await fetch('http://localhost:8000/api/user/change-user-role', {
         method: 'POST',
         credentials:"include",
         headers: {
@@ -104,27 +132,64 @@ const Dashboard = () => {
         },
         body: JSON.stringify({ userId, roleId }),
       });
+
+      const data = await response.json();
+      if (!response.ok) {
+        setErrors(data.errors || { general: data.error });
+        return;
+      }
+
       fetchAllUsers();
     } catch (error) {
       console.error('Role change error:', error);
+      setErrors({ general: 'Failed to update user role' });
     }
   };
 
   const handleCreateRole = async () => {
     try {
       const token = localStorage.getItem('token');
-      await fetch('http://localhost:8000/api/user/create-role', {
+      const response = await fetch('http://localhost:8000/api/user/create-role', {
         method: 'POST',
         credentials:"include",
         headers: {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify(newRole),
+        body: JSON.stringify({
+          name: roleFormData.name,
+          description: roleFormData.description,
+          status: roleFormData.status === 'true'
+        }),
       });
-      setNewRole({ name: '', permissions: [] });
+
+      const data = await response.json();
+      if (!response.ok) {
+        setErrors(data.errors || { general: data.error });
+        return;
+      }
+
+      setRoleFormData({ name: '', description: '', status: 'true' });
+      setErrors({});
+      fetchAllRoles();
     } catch (error) {
       console.error('Create role error:', error);
+      setErrors({ general: 'Failed to create role' });
+    }
+  };
+
+  const fetchAllRoles = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch('http://localhost:8000/api/user/get-roles', {
+        credentials:"include",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const data = await response.json();
+      setRoles(data.data);
+    } catch (error) {
+      console.error('Error fetching roles:', error);
+      setErrors({ general: 'Failed to load roles' });
     }
   };
 
@@ -137,13 +202,22 @@ const Dashboard = () => {
               <h1 className="text-2xl font-bold text-gray-800">User Dashboard</h1>
             </div>
             <div className="flex space-x-8">
-              <button onClick={() => setActiveTab('profile')} className={`${activeTab === 'profile' ? 'border-b-2 border-blue-500' : ''} px-3 py-2 text-gray-600 hover:text-gray-800`}>
+              <button 
+                onClick={() => { setActiveTab('profile'); setErrors({}); }} 
+                className={`${activeTab === 'profile' ? 'border-b-2 border-blue-500' : ''} px-3 py-2 text-gray-600 hover:text-gray-800`}
+              >
                 Profile
               </button>
-              <button onClick={() => setActiveTab('users')} className={`${activeTab === 'users' ? 'border-b-2 border-blue-500' : ''} px-3 py-2 text-gray-600 hover:text-gray-800`}>
+              <button 
+                onClick={() => { setActiveTab('users'); fetchAllUsers(); setErrors({}); }} 
+                className={`${activeTab === 'users' ? 'border-b-2 border-blue-500' : ''} px-3 py-2 text-gray-600 hover:text-gray-800`}
+              >
                 Users
               </button>
-              <button onClick={() => setActiveTab('roles')} className={`${activeTab === 'roles' ? 'border-b-2 border-blue-500' : ''} px-3 py-2 text-gray-600 hover:text-gray-800`}>
+              <button 
+                onClick={() => { setActiveTab('roles'); fetchAllRoles(); setErrors({}); }} 
+                className={`${activeTab === 'roles' ? 'border-b-2 border-blue-500' : ''} px-3 py-2 text-gray-600 hover:text-gray-800`}
+              >
                 Roles
               </button>
             </div>
@@ -152,6 +226,12 @@ const Dashboard = () => {
       </nav>
 
       <div className="max-w-7xl mx-auto px-4 py-8">
+        {errors.general && (
+          <div className="mb-4 p-4 bg-red-100 text-red-700 rounded-lg">
+            {errors.general}
+          </div>
+        )}
+
         {activeTab === 'profile' && user && (
           <div className="bg-white rounded-lg shadow-md p-6">
             <h2 className="text-2xl font-semibold mb-6">Profile Settings</h2>
@@ -207,40 +287,54 @@ const Dashboard = () => {
         {activeTab === 'users' && (
           <div className="bg-white rounded-lg shadow-md p-6">
             <h2 className="text-2xl font-semibold mb-6">User Management</h2>
-            <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
-                  <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Role</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
-                  {users.map((user) => (
-                    <tr key={user._id}>
-                      <td className="px-6 py-4 whitespace-nowrap">{user.name}</td>
-                      <td className="px-6 py-4 whitespace-nowrap">{user.email}</td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <select 
-                          value={user.role} 
-                          onChange={(e) => handleRoleChange(user._id, e.target.value)}
-                          className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                        >
-                          <option value="admin">Admin</option>
-                          <option value="user">User</option>
-                          <option value="moderator">Moderator</option>
-                        </select>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <button className="text-red-600 hover:text-red-900">Delete</button>
-                      </td>
+            <button
+              onClick={fetchAllUsers}
+              className="mb-4 bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700"
+            >
+              Refresh Users
+            </button>
+            
+            {loading ? (
+              <div className="text-center">Loading users...</div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="min-w-full divide-y divide-gray-200">
+                  <thead className="bg-gray-50">
+                    <tr>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Role</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                  </thead>
+                  <tbody className="bg-white divide-y divide-gray-200">
+                    {users.map((user) => (
+                      <tr key={user._id}>
+                        <td className="px-6 py-4 whitespace-nowrap">{user.name}</td>
+                        <td className="px-6 py-4 whitespace-nowrap">{user.email}</td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <select 
+                            value={user.role?._id || ''}
+                            onChange={(e) => handleRoleChange(user._id, e.target.value)}
+                            className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                          >
+                            <option value="">Select Role</option>
+                            {roles.map((role) => (
+                              <option key={role._id} value={role._id}>
+                                {role.name}
+                              </option>
+                            ))}
+                          </select>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <button className="text-red-600 hover:text-red-900">Delete</button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
           </div>
         )}
 
@@ -248,6 +342,46 @@ const Dashboard = () => {
           <div className="bg-white rounded-lg shadow-md p-6">
             <h2 className="text-2xl font-semibold mb-6">Role Management</h2>
             <div className="mb-6">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">
+                    Role Name*
+                    {errors.name && <span className="text-red-500 text-sm ml-2">{errors.name}</span>}
+                  </label>
+                  <input
+                    type="text"
+                    value={roleFormData.name}
+                    onChange={(e) => setRoleFormData({ ...roleFormData, name: e.target.value })}
+                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">
+                    Description
+                    {errors.description && <span className="text-red-500 text-sm ml-2">{errors.description}</span>}
+                  </label>
+                  <input
+                    type="text"
+                    value={roleFormData.description}
+                    onChange={(e) => setRoleFormData({ ...roleFormData, description: e.target.value })}
+                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">
+                    Status*
+                    {errors.status && <span className="text-red-500 text-sm ml-2">{errors.status}</span>}
+                  </label>
+                  <select
+                    value={roleFormData.status}
+                    onChange={(e) => setRoleFormData({ ...roleFormData, status: e.target.value })}
+                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                  >
+                    <option value="true">Active</option>
+                    <option value="false">Inactive</option>
+                  </select>
+                </div>
+              </div>
               <button 
                 onClick={handleCreateRole}
                 className="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700"
@@ -255,34 +389,14 @@ const Dashboard = () => {
                 Create New Role
               </button>
             </div>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700">Role Name</label>
-                <input
-                  type="text"
-                  value={newRole.name}
-                  onChange={(e) => setNewRole({ ...newRole, name: e.target.value })}
-                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700">Permissions</label>
-                <input
-                  type="text"
-                  value={newRole.permissions.join(', ')}
-                  onChange={(e) => setNewRole({ ...newRole, permissions: e.target.value.split(', ') })}
-                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                />
-              </div>
-            </div>
 
             <div className="mt-6 overflow-x-auto">
               <table className="min-w-full divide-y divide-gray-200">
                 <thead className="bg-gray-50">
                   <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Role Name</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Permissions</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Description</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
                   </tr>
                 </thead>
@@ -290,7 +404,12 @@ const Dashboard = () => {
                   {roles.map((role) => (
                     <tr key={role._id}>
                       <td className="px-6 py-4 whitespace-nowrap">{role.name}</td>
-                      <td className="px-6 py-4 whitespace-nowrap">{role.permissions.join(', ')}</td>
+                      <td className="px-6 py-4 whitespace-nowrap">{role.description || '-'}</td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${role.status ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+                          {role.status ? 'Active' : 'Inactive'}
+                        </span>
+                      </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <button className="text-blue-600 hover:text-blue-900 mr-4">Edit</button>
                         <button className="text-red-600 hover:text-red-900">Delete</button>
