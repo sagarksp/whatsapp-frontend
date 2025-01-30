@@ -357,7 +357,10 @@ const MyAccount = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 relative overflow-hidden -mt-16">
+    <>
+    
+  
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 relative overflow-hidden -mt-20">
       {/* Animated Background Elements */}
       {isMounted && (
         <div className="absolute inset-0 opacity-20 dark:opacity-10">
@@ -533,6 +536,7 @@ const MyAccount = () => {
         }
       `}</style>
     </div>
+      </>
   );
 };
 

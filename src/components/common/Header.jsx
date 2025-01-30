@@ -42,6 +42,7 @@ export default function Header({ setIsOpen }) {
 
       if (response.ok) {
         // Redirect to login page after successful logout
+        localStorage.removeItem('token');
         router.push("/")
         window.location.href = '/';
       } else {
@@ -53,7 +54,7 @@ export default function Header({ setIsOpen }) {
   };
 
   return (
-    <header className="bg-white shadow-md">
+    <header className="bg-white shadow-md bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
       <div className="flex items-center justify-between px-4 py-3">
         <button
           onClick={() => setIsOpen(true)}

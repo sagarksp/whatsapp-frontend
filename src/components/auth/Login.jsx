@@ -279,16 +279,21 @@ export default function Login() {
     try {
       const res = await fetch(`${process.env.NEXT_PUBLIC_MAIN_URL}/api/auth/login`, {
         method: 'POST',
-        credentials: 'include', // Include cookies in the request
+        credentials:"include",
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(formData),
       });
 
+      const data = await res.json(); // Always parse the response
+
       if (res.ok) {
-        router.push('/myaccount'); // Redirect to the dashboard
+        // Store the received token in localStorage
+        localStorage.setItem('token', data.token);
+        
+        // Force full page reload to update layout state
+        window.location.href = '/myaccount';
       } else {
-        const errorData = await res.json();
-        setErrors((prev) => ({ ...prev, form: errorData.message || 'Login failed' }));
+        setErrors((prev) => ({ ...prev, form: data.message || 'Login failed' }));
       }
     } catch (error) {
       setErrors((prev) => ({ ...prev, form: 'Network error. Please try again.' }));
@@ -297,7 +302,7 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 relative overflow-hidden">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 relative overflow-hidden -mt-20 ">
       <form
         onSubmit={handleLogin}
         className="bg-white/30 dark:bg-gray-800/50 backdrop-blur-lg p-8 rounded-2xl shadow-2xl w-full max-w-md border border-white/20 dark:border-gray-700/50"

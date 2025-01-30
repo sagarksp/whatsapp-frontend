@@ -701,6 +701,12 @@
 
 // // export default Devices;
 
+///working code
+
+//need to resolve the issue of handling multiple session when try to open another session than previous session get disconnected and cant able to sent the message from the previous session or previous connected device one issue get resolved in this version that we can connect or start session for the multiple device whihch is not possible in the last version.
+
+//Bug of not send the message by different device may get resolved in the next version so 
+
 "use client";
 import Link from "next/link";
 import React, { useState, useEffect, useRef } from "react";
@@ -730,9 +736,11 @@ const Devices = () => {
   const [qrCode, setQrCode] = useState(null);
   const [groups, setGroups] = useState([]);
   const [phone, setPhone] = useState("");
+  const [connectedDevicePhone, setConnectedDevicePhone] = useState("");
 
   const [currentPage, setCurrentPage] = useState(1);
   const devicesPerPage = 10;
+  const [showSessionExists, setShowSessionExists] = useState(false);
 
   useEffect(() => {
     setIsMounted(true);
@@ -900,23 +908,28 @@ const Devices = () => {
         "http://localhost:8000/api/device/connect/startSession",
         {
           method: "POST",
-          credentials : "include",
+          credentials: "include",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ sessionId, phoneNumber }),
+          body: JSON.stringify({ sessionId, devicePhone: phoneNumber }),
         }
       );
       const data = await response.json();
-      if (data.success) {
+      if (data?.success) {
         setIsConnected(true);
+        setConnectedDevicePhone(phoneNumber); // Store sender's number
       }
     } catch (error) {
       console.error("Error starting session:", error);
     }
   };
 
+  const handleNavigateToDevice = (phoneNumber) => {
+    router.push(`/devices/${phoneNumber}`);
+  };
+
   const handleSendMessage = async () => {
     const sessionId = localStorage.getItem("sessionId");
-    if (!sessionId) {
+    if (!sessionId || !connectedDevicePhone) {
       setStatusMessage("Session not started. Please start the session first.");
       return;
     }
@@ -927,19 +940,19 @@ const Devices = () => {
       setStatusMessage("Please enter both phone number and message.");
       return;
     }
-    const deptType = "67823f62488dc80b1dd316ee";
+
     try {
       const response = await fetch(
         "http://localhost:8000/api/device/connect/send-message",
         {
           method: "POST",
-          credentials:"include",
+          credentials: "include",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             sessionId,
-            phoneNumber: phone,
+            phoneNumber: phone, // Receiver's number
             message,
-            deptType,
+            devicePhone: connectedDevicePhone, // Sender's number
           }),
         }
       );
@@ -961,7 +974,7 @@ const Devices = () => {
         "http://localhost:8000/api/device/connect/logout",
         {
           method: "POST",
-          credentials:"include",
+          credentials: "include",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ sessionId }),
         }
@@ -976,7 +989,8 @@ const Devices = () => {
 
   const handleFetchGroups = async () => {
     const sessionId = localStorage.getItem("sessionId");
-    if (!sessionId) {``
+    if (!sessionId) {
+      ``;
       setStatusMessage("Session not started. Please start the session first.");
       return;
     }
@@ -985,6 +999,7 @@ const Devices = () => {
         "http://localhost:8000/api/device/connect/fetch-groups",
         {
           method: "POST",
+          credentials:"include",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ sessionId }),
         }
@@ -1059,7 +1074,7 @@ const Devices = () => {
   if (!isMounted) return null;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 relative overflow-hidden">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 relative overflow-hidden max-w-full -mt-20">
       <div className="container mx-auto p-4 min-h-screen flex items-center justify-center">
         <div className="bg-white/30 dark:bg-gray-800/50 backdrop-blur-lg rounded-2xl shadow-2xl w-full max-w-6xl p-8 border border-white/20 dark:border-gray-700/50">
           <div className="flex justify-between items-center mb-8">
@@ -1118,8 +1133,8 @@ const Devices = () => {
               id="phone-number"
               value={phone}
               onChange={(e) => setPhone(e.target.value)}
-              placeholder="Phone Number"
-              className="w-full p-3 rounded-lg border border-gray-200 dark:border-gray-700 bg-white/50 dark:bg-gray-700/50 text-gray-800 dark:text-white focus:ring-2 focus:ring-purple-500 transition-all"
+              placeholder="Receiver's Phone Number" // Update placeholder
+              className="..."
             />
             <input
               type="text"
@@ -1374,3 +1389,877 @@ const DetailItem = ({ label, value, status }) => (
 );
 
 export default Devices;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+// "use client"
+// import { useEffect, useState } from 'react';
+// import io from 'socket.io-client';
+// import DeviceList from './devices/DeviceList';
+// import QRCodeDisplay from './devices/QrCodeDIsplay';
+// import StatusMessage from './devices/StatusMessage';
+
+// const socket = io('http://localhost:8000'); // Backend running on port 8000
+
+// export default function Home() {
+//   const [sessionId, setSessionId] = useState(null);
+//   const [isConnected, setIsConnected] = useState(false);
+//   const [qrCode, setQrCode] = useState('');
+//   const [status, setStatus] = useState('');
+
+//   useEffect(() => {
+//     const storedSessionId = localStorage.getItem('sessionId');
+//     const storedIsConnected = localStorage.getItem('isConnected');
+//     if (storedIsConnected && storedSessionId) {
+//       setSessionId(storedSessionId);
+//       setIsConnected(true);
+//       setStatus('You are connected!');
+//     } else {
+//       setStatus('Please start a session.');
+//     }
+
+//     socket.on('connect', () => {
+//       console.log('Connected to WebSocket server with socket ID:', socket.id);
+//     });
+
+//     socket.on('qr-code', (qr) => {
+//       setQrCode(qr);
+//     });
+
+//     socket.on('connected', (message) => {
+//       setStatus(message);
+//       setIsConnected(true);
+//       localStorage.setItem('isConnected', 'true');
+//     });
+
+//     socket.on('error', (error) => {
+//       console.error('Socket error:', error);
+//       setStatus(error.includes('Phone number mismatch') ? error : 'Socket error occurred.');
+//       setIsConnected(false);
+//       localStorage.removeItem('sessionId');
+//       localStorage.removeItem('isConnected');
+//     });
+
+//     return () => {
+//       socket.disconnect();
+//     };
+//   }, []);
+
+//   const handleStartSession = async (devicePhone) => {
+//     try {
+//       const response = await fetch('http://localhost:8000/api/device/connect/startSession', {
+//         method: 'POST',
+//         credentials:"include",
+//         headers: { 'Content-Type': 'application/json' },
+//         body: JSON.stringify({ sessionId: socket.id, devicePhone }),
+//       });
+//       const data = await response.json();
+
+//       if (data.success) {
+//         setStatus('Session started successfully!');
+//         setSessionId(socket.id); // Use the session ID from the socket
+//         localStorage.setItem('sessionId', socket.id);
+//       } else {
+//         setStatus(`Error: ${data.error}`);
+//       }
+//     } catch (error) {
+//       console.error('Error starting session:', error);
+//       setStatus('Failed to start session.');
+//     }
+//   };
+
+//   return (
+//     <div>
+//       <h1>Device List</h1>
+//       <DeviceList onStartSession={handleStartSession} />
+//       <QRCodeDisplay qrCode={qrCode} />
+//       <StatusMessage status={status} />
+//       {isConnected && (
+//         <a href="/send-message">
+//           <button>Send Message</button>
+//         </a>
+//       )}
+//     </div>
+//   );
+// }
+
+
+
+
+
+// html to jsx code 
+
+// 'use client';
+// import { useState, useEffect } from 'react';
+// import io from 'socket.io-client';
+
+// const socket = io('http://localhost:8000');
+
+// export default function SocketComponent() {
+//   const [sessionId, setSessionId] = useState(localStorage.getItem('sessionId'));
+//   const [isConnected, setIsConnected] = useState(localStorage.getItem('isConnected') === 'true');
+//   const [status, setStatus] = useState(isConnected ? 'You are connected!' : 'Please start a session.');
+//   const [qrCode, setQrCode] = useState('');
+//   const [phoneNumber, setPhoneNumber] = useState('');
+//   const [message, setMessage] = useState('');
+  
+//   useEffect(() => {
+//     socket.on('connect', () => {
+//       console.log('Connected to WebSocket server with socket ID:', socket.id);
+//     });
+
+//     socket.on('qr-code', (qr) => {
+//       setQrCode(qr);
+//     });
+
+//     socket.on('connected', (message) => {
+//       setStatus(message);
+//       setIsConnected(true);
+//       localStorage.setItem('isConnected', 'true');
+//     });
+
+//     socket.on('logout-success', () => {
+//       setStatus('Logged out. Please scan the QR code to reconnect.');
+//       setIsConnected(false);
+//       localStorage.removeItem('sessionId');
+//       localStorage.removeItem('isConnected');
+//     });
+
+//     socket.on('error', (error) => {
+//       console.error('Socket error:', error);
+//       setStatus(error);
+//       if (error.includes('Phone number mismatch')) {
+//         setIsConnected(false);
+//         localStorage.removeItem('sessionId');
+//         localStorage.removeItem('isConnected');
+//       }
+//     });
+//   }, []);
+
+//   const startSession = async () => {
+//     try {
+//       const response = await fetch('http://localhost:8000/api/device/connect/startSession', {
+//         method: 'POST',
+//         credentials:"include",
+//         headers: { 'Content-Type': 'application/json' },
+//         body: JSON.stringify({ sessionId: socket.id, devicePhone: '919457803079' }),
+//       });
+//       const data = await response.json();
+//       if (data.success) {
+//         setSessionId(socket.id);
+//         setIsConnected(true);
+//         localStorage.setItem('sessionId', socket.id);
+//         localStorage.setItem('isConnected', 'true');
+//         setStatus('Session started successfully!');
+//       } else {
+//         setStatus(`Error: ${data.error}`);
+//       }
+//     } catch (error) {
+//       console.error('Error starting session:', error);
+//       setStatus('Failed to start session.');
+//     }
+//   };
+
+//   const sendMessage = async () => {
+//     if (!sessionId) {
+//       setStatus('Please start the session first.');
+//       return;
+//     }
+//     try {
+//       const response = await fetch('http://localhost:8000/api/device/connect/send-message', {
+//         method: 'POST',
+//         credentials:"include",
+//         headers: { 'Content-Type': 'application/json' },
+//         body: JSON.stringify({ sessionId, phoneNumber, message }),
+//       });
+//       const data = await response.json();
+//       setStatus(data.message);
+//     } catch (error) {
+//       console.error('Error sending message:', error);
+//       setStatus('Failed to send message.');
+//     }
+//   };
+
+//   const logout = async () => {
+//     try {
+//       await fetch('http://localhost:8000/api/device/connect/logout', {
+//         method: 'POST',
+//         credentials:"include",
+//         headers: { 'Content-Type': 'application/json' },
+//         body: JSON.stringify({ sessionId }),
+//       });
+//       setIsConnected(false);
+//       setSessionId(null);
+//       localStorage.removeItem('sessionId');
+//       localStorage.removeItem('isConnected');
+//       setStatus('Logged out. Please scan the QR code to reconnect.');
+//     } catch (error) {
+//       console.error('Error during logout:', error);
+//     }
+//   };
+
+//   return (
+//     <div className="container mx-auto p-4">
+//       <h1 className="text-2xl font-bold mb-4">WebSocket Connection</h1>
+//       <p className="mb-2">Status: {status}</p>
+//       {qrCode && (
+//         <pre className="bg-gray-100 p-4 mt-4 rounded-lg text-center">{qrCode}</pre>
+//       )}
+//       <button onClick={startSession} className="bg-blue-500 text-white px-4 py-2 rounded mr-2" disabled={isConnected}>Start Session</button>
+//       <button onClick={logout} className="bg-red-500 text-white px-4 py-2 rounded" disabled={!isConnected}>Logout</button>
+//       <div className="mt-4">
+//         <input type="text" placeholder="Phone Number" className="border p-2 mr-2" value={phoneNumber} onChange={(e) => setPhoneNumber(e.target.value)} />
+//         <input type="text" placeholder="Message" className="border p-2 mr-2" value={message} onChange={(e) => setMessage(e.target.value)} />
+//         <button onClick={sendMessage} className="bg-green-500 text-white px-4 py-2 rounded" disabled={!isConnected}>Send Message</button>
+//       </div>
+//     </div>
+//   );
+// }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+////////******************************** */
+
+// "use client";
+// // app/devices/page.jsx
+// import React, { useState, useEffect } from "react";
+// import { useRouter } from "next/navigation";
+// import Link from "next/link";
+// import PaginationControls from "./devices/PaginationControls";
+
+// const Devices = () => {
+//   const [devices, setDevices] = useState([]);
+//   const [isModalOpen, setIsModalOpen] = useState(false);
+//   const [newDevice, setNewDevice] = useState({ deviceName: "", devicePhone: "" });
+//   const router = useRouter();
+//   const [loading, setLoading] = useState(true);
+//   const [error, setError] = useState(null);
+//   const [searchTerm, setSearchTerm] = useState("");
+//   const [showSessionExists, setShowSessionExists] = useState(false);
+//   const [connectedDevice, setConnectedDevice] = useState(null);
+
+//   const devicesPerPage = 10;
+//   const [currentPage, setCurrentPage] = useState(1);
+
+//   useEffect(() => {
+//     fetchDevices();
+//     const storedDevice = localStorage.getItem("connectedDevice");
+//     if (storedDevice) setConnectedDevice(storedDevice);
+//   }, []);
+
+//   const fetchDevices = async () => {
+//     try {
+//       const response = await fetch("http://localhost:8000/api/device", {
+//         credentials:"include",
+//         headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+//       });
+//       const data = await response.json();
+//       setDevices(data.data || []);
+//     } catch (error) {
+//       setError(error.message);
+//     } finally {
+//       setLoading(false);
+//     }
+//   };
+
+//   const handleCreateDevice = async () => {
+//     try {
+//       const response = await fetch("http://localhost:8000/api/device/create", {
+//         method: "POST",
+//         credentials:"include",
+//         headers: {
+//           "Content-Type": "application/json",
+//           Authorization: `Bearer ${localStorage.getItem("token")}`,
+//         },
+//         body: JSON.stringify(newDevice),
+//       });
+//       await fetchDevices();
+//       setIsModalOpen(false);
+//     } catch (error) {
+//       setError(error.message);
+//     }
+//   };
+
+//   const handleStartSession = (phoneNumber) => {
+//     if (connectedDevice) {
+//       setShowSessionExists(true);
+//     } else {
+//       router.push(`/devices/${phoneNumber}`);
+//     }
+//   };
+
+//   const filteredDevices = devices.filter(device =>
+//     device.deviceName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+//     device.devicePhone.includes(searchTerm)
+//   );
+
+//   const currentDevices = filteredDevices.slice(
+//     (currentPage - 1) * devicesPerPage,
+//     currentPage * devicesPerPage
+//   );
+
+//   return (
+//     <div className="container mx-auto p-4">
+//       <div className="flex justify-between items-center mb-8">
+//         <h1 className="text-3xl font-bold">Device Management</h1>
+//         <button onClick={() => setIsModalOpen(true)} className="btn-primary">
+//           Add New Device
+//         </button>
+//       </div>
+
+//       <input
+//         type="text"
+//         placeholder="Search devices..."
+//         value={searchTerm}
+//         onChange={(e) => setSearchTerm(e.target.value)}
+//         className="search-input"
+//       />
+
+//       {showSessionExists && (
+//         <div className="modal-backdrop">
+//           <div className="modal">
+//             <h2>Session Exists</h2>
+//             <p>A session is already active. Please end it before starting a new one.</p>
+//             <button onClick={() => setShowSessionExists(false)} className="btn-close">
+//               Close
+//             </button>
+//           </div>
+//         </div>
+//       )}
+
+//       <table className="device-table">
+//         <thead>
+//           <tr>
+//             <th>Device Name</th>
+//             <th>Phone Number</th>
+//             <th>Status</th>
+//             <th>Actions</th>
+//           </tr>
+//         </thead>
+//         <tbody>
+//           {currentDevices.map(device => (
+//             <tr key={device._id}>
+//               <td>{device.deviceName}</td>
+//               <td>{device.devicePhone}</td>
+//               <td>
+//                 <span className={`status ${device.status.toLowerCase()}`}>
+//                   {device.status}
+//                 </span>
+//               </td>
+//               <td className="actions">
+//                 <button
+//                   onClick={() => handleStartSession(device.devicePhone)}
+//                   className="btn-start"
+//                 >
+//                   Start Session
+//                 </button>
+//                 <button
+//                   onClick={() => router.push(`/devices/${device.devicePhone}`)}
+//                   className="btn-check"
+//                 >
+//                   Check Device
+//                 </button>
+//               </td>
+//             </tr>
+//           ))}
+//         </tbody>
+//       </table>
+
+//       <PaginationControls
+//         currentPage={currentPage}
+//         totalPages={Math.ceil(filteredDevices.length / devicesPerPage)}
+//         onPageChange={setCurrentPage}
+//       />
+
+//       {isModalOpen && (
+//         <div className="modal-backdrop">
+//           <div className="modal">
+//             <h2>Create New Device</h2>
+//             <input
+//               type="text"
+//               placeholder="Device Name"
+//               value={newDevice.deviceName}
+//               onChange={(e) => setNewDevice({...newDevice, deviceName: e.target.value})}
+//             />
+//             <input
+//               type="text"
+//               placeholder="Phone Number"
+//               value={newDevice.devicePhone}
+//               onChange={(e) => setNewDevice({...newDevice, devicePhone: e.target.value})}
+//             />
+//             <div className="modal-actions">
+//               <button onClick={handleCreateDevice} className="btn-create">Create</button>
+//               <button onClick={() => setIsModalOpen(false)} className="btn-cancel">
+//                 Cancel
+//               </button>
+//             </div>
+//           </div>
+//         </div>
+//       )}
+//     </div>
+//   );
+// };
+
+// export default Devices;
+
+// "use client";
+// import React, { useState, useEffect } from "react";
+// import { useRouter } from "next/navigation";
+// import Link from "next/link";
+
+// const Devices = () => {
+//   const [devices, setDevices] = useState([]);
+//   const [selectedDevice, setSelectedDevice] = useState(null);
+//   const [isModalOpen, setIsModalOpen] = useState(false);
+//   const [newDevice, setNewDevice] = useState({ deviceName: "", devicePhone: "" });
+//   const [loading, setLoading] = useState(true);
+//   const [error, setError] = useState(null);
+//   const [success, setSuccess] = useState(null);
+//   const [searchTerm, setSearchTerm] = useState("");
+//   const [activeDevicePhone, setActiveDevicePhone] = useState("");
+//   const router = useRouter();
+//   const [activeSession, setActiveSession] = useState(null);
+
+//    // Get active sessions from localStorage
+//   const activeSessions = JSON.parse(localStorage.getItem("activeSessions") || "{}");
+
+//   useEffect(() => {
+//     fetchDevices();
+
+//   }, []);
+
+//   const fetchDevices = async () => {
+//     try {
+//       const response = await fetch("http://localhost:8000/api/device", {
+//         credentials:"include",
+//         headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+//       });
+//       const data = await response.json();
+//       setDevices(data.data || []);
+//     } catch (error) {
+//       setError(error.message);
+//     }
+//   };
+
+//   const handleCreateDevice = async () => {
+//     try {
+//       const response = await fetch("http://localhost:8000/api/device/create", {
+//         method: "POST",
+
+//         credentials: "include",
+//         headers: {
+//           "Content-Type": "application/json",
+//           Authorization: `Bearer ${localStorage.getItem("token")}`,
+//         },
+//         body: JSON.stringify(newDevice),
+//       });
+//       const data = await response.json();
+//       if (response.ok) {
+//         setSuccess("Device created!");
+//         fetchDevices();
+//         setIsModalOpen(false);
+//         setNewDevice({ deviceName: "", devicePhone: "" });
+//       }
+//     } catch (error) {
+//       setError(error.message);
+//     }
+//   };
+
+//   const handleStartSession = (phoneNumber) => {
+//     if (activeSessions[phoneNumber]) {
+//       setError("Session already active. Use View Session instead.");
+//       return;
+//     }
+
+//     const sessionId = `session_${Date.now()}_${phoneNumber}`;
+//     const newActiveSessions = { ...activeSessions, [phoneNumber]: sessionId };
+//     localStorage.setItem("activeSessions", JSON.stringify(newActiveSessions));
+//     router.push(`/session/${phoneNumber}?newSession=true`);
+//   };
+
+//   const handleViewSession = (phoneNumber) => {
+//     router.push(`/session/${phoneNumber}`);
+//   };
+
+//   const filteredDevices = devices.filter(device =>
+//     device.deviceName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+//     device.devicePhone.includes(searchTerm)
+//   );
+
+//   return (
+//     <div className="container mx-auto p-4">
+//       <div className="bg-white rounded-lg shadow-md p-6">
+//         <div className="flex justify-between items-center mb-6">
+//           <h1 className="text-3xl font-bold">Device Management</h1>
+//           <button
+//             onClick={() => setIsModalOpen(true)}
+//             className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
+//           >
+//             Add New Device
+//           </button>
+//         </div>
+
+//         <input
+//           type="text"
+//           placeholder="Search devices..."
+//           value={searchTerm}
+//           onChange={(e) => setSearchTerm(e.target.value)}
+//           className="w-full p-2 border rounded mb-4"
+//         />
+
+//         {error && <div className="text-red-500 mb-4">{error}</div>}
+//         {success && <div className="text-green-500 mb-4">{success}</div>}
+
+//         <div className="overflow-x-auto">
+//           <table className="w-full">
+//             <thead className="bg-gray-100">
+//               <tr>
+//                 <th className="p-2 text-left">Device Name</th>
+//                 <th className="p-2 text-left">Phone</th>
+//                 <th className="p-2 text-left">Status</th>
+//                 <th className="p-2 text-left">Actions</th>
+//               </tr>
+//             </thead>
+//             <tbody>
+//             {devices.map((device) => (
+//               <tr key={device._id} className="border-t hover:bg-gray-50">
+//                 <td className="p-2">{device.deviceName}</td>
+//                 <td className="p-2">{device.devicePhone}</td>
+//                 <td className="p-2">
+//                   {activeSessions[device.devicePhone] ? (
+//                     <>
+//                       <button
+//                         onClick={() => handleViewSession(device.devicePhone)}
+//                         className="text-green-500 hover:text-green-700 mr-4"
+//                       >
+//                         View Session
+//                       </button>
+//                     </>
+//                   ) : (
+//                     <button
+//                       onClick={() => handleStartSession(device.devicePhone)}
+//                       className="text-blue-500 hover:text-blue-700"
+//                     >
+//                       Start Session
+//                     </button>
+//                   )}
+//                 </td>
+//               </tr>
+//             ))}
+//           </tbody>
+//           </table>
+//         </div>
+
+//         {isModalOpen && (
+//           <div className="fixed inset-0 bg-black/50 flex items-center justify-center">
+//             <div className="bg-white p-6 rounded-lg w-96">
+//               <h2 className="text-xl font-bold mb-4">New Device</h2>
+//               <input
+//                 type="text"
+//                 placeholder="Device Name"
+//                 value={newDevice.deviceName}
+//                 onChange={(e) => setNewDevice({...newDevice, deviceName: e.target.value})}
+//                 className="w-full p-2 border rounded mb-2"
+//               />
+//               <input
+//                 type="text"
+//                 placeholder="Phone Number"
+//                 value={newDevice.devicePhone}
+//                 onChange={(e) => setNewDevice({...newDevice, devicePhone: e.target.value})}
+//                 className="w-full p-2 border rounded mb-4"
+//               />
+//               <div className="flex gap-2">
+//                 <button
+//                   onClick={handleCreateDevice}
+//                   className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
+//                 >
+//                   Create
+//                 </button>
+//                 <button
+//                   onClick={() => setIsModalOpen(false)}
+//                   className="bg-gray-200 px-4 py-2 rounded hover:bg-gray-300"
+//                 >
+//                   Cancel
+//                 </button>
+//               </div>
+//             </div>
+//           </div>
+//         )}
+//       </div>
+//     </div>
+//   );
+// };
+
+// export default Devices;
+
+// "use client";
+// import { useState, useEffect } from "react";
+// import { useRouter } from "next/navigation";
+// import Link from "next/link";
+
+// const Devices = () => {
+//   const [devices, setDevices] = useState([]);
+//   const [isModalOpen, setIsModalOpen] = useState(false);
+//   const [newDevice, setNewDevice] = useState({ deviceName: "", devicePhone: "" });
+//   const [error, setError] = useState(null);
+//   const [success, setSuccess] = useState(null);
+//   const [searchTerm, setSearchTerm] = useState("");
+//   const router = useRouter();
+
+//   // Get active sessions from localStorage
+//   const [activeSessions, setActiveSessions] = useState(() => {
+//     if (typeof window !== "undefined") {
+//       return JSON.parse(localStorage.getItem("activeSessions") || "{}");
+//     }
+//     return {};
+//   });
+
+//   useEffect(() => {
+//     fetchDevices();
+//   }, []);
+
+//   const fetchDevices = async () => {
+//     try {
+//       const response = await fetch("http://localhost:8000/api/device", {
+//         credentials:"include",
+//         headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+//       });
+//       const data = await response.json();
+//       setDevices(data.data || []);
+//     } catch (error) {
+//       setError(error.message);
+//     }
+//   };
+
+//   const handleCreateDevice = async () => {
+//     try {
+//       const response = await fetch("http://localhost:8000/api/device/create", {
+//         method: "POST",
+//         credentials:"include",
+//         headers: {
+//           "Content-Type": "application/json",
+//           Authorization: `Bearer ${localStorage.getItem("token")}`,
+//         },
+//         body: JSON.stringify(newDevice),
+//       });
+
+//       if (response.ok) {
+//         setSuccess("Device created successfully!");
+//         fetchDevices();
+//         setIsModalOpen(false);
+//         setNewDevice({ deviceName: "", devicePhone: "" });
+//       }
+//     } catch (error) {
+//       setError(error.message);
+//     }
+//   };
+
+//   const handleStartSession = (devicePhone) => {
+//     const sessionId = `session_${Date.now()}_${devicePhone}`;
+//     const updatedSessions = { ...activeSessions, [devicePhone]: sessionId };
+
+//     localStorage.setItem("activeSessions", JSON.stringify(updatedSessions));
+//     setActiveSessions(updatedSessions);
+//     router.push(`/session/${devicePhone}?newSession=true`);
+//   };
+
+//   const handleViewSession = (devicePhone) => {
+//     router.push(`/session/${devicePhone}`);
+//   };
+
+//   return (
+//     <div className="container mx-auto p-4">
+//       <div className="bg-white rounded-lg shadow-md p-6">
+//         <div className="flex justify-between items-center mb-6">
+//           <h1 className="text-3xl font-bold">Device Management</h1>
+//           <button
+//             onClick={() => setIsModalOpen(true)}
+//             className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
+//           >
+//             Add New Device
+//           </button>
+//         </div>
+
+//         <input
+//           type="text"
+//           placeholder="Search devices..."
+//           value={searchTerm}
+//           onChange={(e) => setSearchTerm(e.target.value)}
+//           className="w-full p-2 border rounded mb-4"
+//         />
+
+//         {error && <div className="text-red-500 mb-4">{error}</div>}
+//         {success && <div className="text-green-500 mb-4">{success}</div>}
+
+//         <div className="overflow-x-auto">
+//           <table className="w-full">
+//             <thead className="bg-gray-100">
+//               <tr>
+//                 <th className="p-2 text-left">Device Name</th>
+//                 <th className="p-2 text-left">Phone</th>
+//                 <th className="p-2 text-left">Actions</th>
+//               </tr>
+//             </thead>
+//             <tbody>
+//               {devices
+//                 .filter(device =>
+//                   device.deviceName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+//                   device.devicePhone.includes(searchTerm)
+//                 )
+//                 .map((device) => (
+//                   <tr key={device._id} className="border-t hover:bg-gray-50">
+//                     <td className="p-2">{device.deviceName}</td>
+//                     <td className="p-2">{device.devicePhone}</td>
+//                     <td className="p-2">
+//                       {activeSessions[device.devicePhone] ? (
+//                         <button
+//                           onClick={() => handleViewSession(device.devicePhone)}
+//                           className="text-green-500 hover:text-green-700"
+//                         >
+//                           View Session
+//                         </button>
+//                       ) : (
+//                         <button
+//                           onClick={() => handleStartSession(device.devicePhone)}
+//                           className="text-blue-500 hover:text-blue-700"
+//                         >
+//                           Start Session
+//                         </button>
+//                       )}
+//                     </td>
+//                   </tr>
+//                 ))}
+//             </tbody>
+//           </table>
+//         </div>
+
+//         {isModalOpen && (
+//           <div className="fixed inset-0 bg-black/50 flex items-center justify-center">
+//             <div className="bg-white p-6 rounded-lg w-96">
+//               <h2 className="text-xl font-bold mb-4">New Device</h2>
+//               <input
+//                 type="text"
+//                 placeholder="Device Name"
+//                 value={newDevice.deviceName}
+//                 onChange={(e) => setNewDevice({...newDevice, deviceName: e.target.value})}
+//                 className="w-full p-2 border rounded mb-2"
+//               />
+//               <input
+//                 type="text"
+//                 placeholder="Phone Number"
+//                 value={newDevice.devicePhone}
+//                 onChange={(e) => setNewDevice({...newDevice, devicePhone: e.target.value})}
+//                 className="w-full p-2 border rounded mb-4"
+//               />
+//               <div className="flex gap-2">
+//                 <button
+//                   onClick={handleCreateDevice}
+//                   className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
+//                 >
+//                   Create
+//                 </button>
+//                 <button
+//                   onClick={() => setIsModalOpen(false)}
+//                   className="bg-gray-200 px-4 py-2 rounded hover:bg-gray-300"
+//                 >
+//                   Cancel
+//                 </button>
+//               </div>
+//             </div>
+//           </div>
+//         )}
+//       </div>
+//     </div>
+//   );
+// };
+
+// export default Devices;

@@ -220,7 +220,7 @@ export default function Signup() {
 
   if(!isMounted) return null;
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 relative overflow-hidden -mt-16">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 relative overflow-hidden -mt-20">
        {/* toast container */}
       <div style={{zIndex: 10000, position:"fixed", top: "20px", right:"20px"}}>
           <ToastContainer

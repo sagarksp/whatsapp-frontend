@@ -211,8 +211,10 @@ const OutboxIcon = () => (
 const sidebarItems = [
   { icon: UserIcon, text: "My Account", href: "/myaccount" },
   { icon: DevicesIcon, text: "Devices", href: "/connectdevices" },
-  { icon: SendMessageIcon, text: "Send Message", href: "/sendmessages" },
+  { icon: SendMessageIcon, text: "Templates", href: "/templates" },
   { icon: OutboxIcon, text: "OutBox", href: "/outbox" },
+  { icon: UserIcon, text: "User Details", href: "/users" },
+
 ];
 
 export default function Sidebar({ isOpen, setIsOpen }) {

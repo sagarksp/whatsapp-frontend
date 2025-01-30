@@ -1,75 +1,52 @@
-// components/DeviceTable.jsx
-import React from 'react';
-import Link from "next/link";
-
-const DeviceTable = ({ devices, onSelectDevice }) => (
-    <div className="overflow-x-auto">
-        <table className="w-full">
-            <thead className="bg-gray-100 dark:bg-gray-700">
+// components/DevicesTable.jsx
+export default function DevicesTable({ devices, onStartSession, onViewStatus }) {
+    return (
+      <div className="overflow-x-auto">
+        <table className="min-w-full bg-white border">
+          <thead className="bg-gray-50">
             <tr>
-                {[
-                    "Device Name",
-                    "Phone",
-                    "Status",
-                    "API Token",
-                    "Actions",
-                ].map((header) => (
-                    <th
-                        key={header}
-                        className="p-4 text-left text-gray-600 dark:text-gray-300"
-                    >
-                        {header}
-                    </th>
-                ))}
+              <th className="py-3 px-4 border-b text-left">Device Name</th>
+              <th className="py-3 px-4 border-b text-left">Phone Number</th>
+              <th className="py-3 px-4 border-b text-left">Status</th>
+              <th className="py-3 px-4 border-b text-left">Actions</th>
             </tr>
-            </thead>
-            <tbody>
+          </thead>
+          <tbody>
             {devices.map((device) => (
-                <tr
-                    key={device._id}
-                    className="border-t border-gray-200 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700/50"
-                >
-                    <td className="p-4 text-gray-800 dark:text-gray-200">
-                        {device.deviceName}
-                    </td>
-                    <td className="p-4 text-gray-800 dark:text-gray-200">
-                        {device.devicePhone}
-                    </td>
-                    <td className="p-4">
-                    <span
-                        className={`px-3 py-1 rounded-full text-sm ${
-                            device.status.toLowerCase() === "online"
-                                ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400"
-                                : "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400"
-                        }`}
-                    >
-                      {device.status}
-                    </span>
-                    </td>
-                    <td className="p-4 text-blue-600 dark:text-blue-400 break-all">
-                        {device.apiToken}
-                    </td>
-                    <td className="p-4">
-                        <button
-                            onClick={() => onSelectDevice(device._id)}
-                            className="text-purple-600 hover:text-purple-700 dark:text-purple-400 dark:hover:text-purple-300 transition-colors"
-                        >
-                            View
-                        </button>
-                         <Link href="/">
-                           <button
-
-                              className="text-teal-500 hover:text-teal-700 dark:text-teal-400 dark:hover:text-teal-300 transition-colors ml-8"
-                           >
-                             Start Session
-                           </button>
-                         </Link>
-                    </td>
-                </tr>
+              <tr key={device._id} className="hover:bg-gray-50">
+                <td className="py-3 px-4 border-b">{device.deviceName}</td>
+                <td className="py-3 px-4 border-b">{device.devicePhone}</td>
+                <td className="py-3 px-4 border-b">
+                  <span className={`inline-block px-2 py-1 rounded text-sm 
+                    ${device.status === 'online' 
+                      ? 'bg-green-100 text-green-800' 
+                      : 'bg-red-100 text-red-800'}`}>
+                    {device.status}
+                  </span>
+                </td>
+                <td className="py-3 px-4 border-b space-x-2">
+                  <button
+                    onClick={() => onStartSession(device.devicePhone)}
+                    className={`px-3 py-1 rounded text-white ${
+                      device.status === 'online'
+                        ? 'bg-gray-300 cursor-not-allowed'
+                        : 'bg-green-500 hover:bg-green-600'
+                    }`}
+                    disabled={device.status === 'online'}
+                  >
+                    {device.status === 'online' ? 'Connected' : 'Start Session'}
+                  </button>
+                  <button
+                    onClick={() => onViewStatus(device)}
+                    className="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded"
+                  >
+                    View
+                  </button>
+                </td>
+              </tr>
             ))}
-            </tbody>
+          </tbody>
         </table>
-    </div>
-);
-
-export default DeviceTable;
+      </div>
+    );
+  }

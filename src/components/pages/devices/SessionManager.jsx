@@ -63,6 +63,7 @@ const SessionManager = ({ phoneNumber, onLogout }) => {
         try {
             const response = await fetch('http://localhost:8000/api/device/connect/startSession', {
                 method: 'POST',
+    
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ sessionId, phoneNumber: phone }),
             });
