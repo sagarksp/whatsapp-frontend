@@ -148,6 +148,10 @@ const Dashboard = () => {
 
   const handleCreateRole = async () => {
     try {
+      if (!roleFormData.name || !roleFormData.status) {
+        setErrors({ general: 'Please fill in all required fields' });
+        return;
+      }
       const token = localStorage.getItem('token');
       const response = await fetch('http://localhost:8000/api/user/create-role', {
         method: 'POST',
@@ -199,7 +203,7 @@ const Dashboard = () => {
         <div className="max-w-7xl mx-auto px-4">
           <div className="flex justify-between h-16">
             <div className="flex items-center">
-              <h1 className="text-2xl font-bold text-gray-800">User Dashboard</h1>
+              <h1 className="text-2xl font-bold text-gray-800">Users</h1>
             </div>
             <div className="flex space-x-8">
               <button 
@@ -345,7 +349,7 @@ const Dashboard = () => {
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700">
-                    Role Name*
+                    Role Name <span className="text-red-500 text-sm ml-2">*</span>
                     {errors.name && <span className="text-red-500 text-sm ml-2">{errors.name}</span>}
                   </label>
                   <input
@@ -369,7 +373,7 @@ const Dashboard = () => {
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700">
-                    Status*
+                    Status <span className="text-red-500 text-sm ml-2">*</span>
                     {errors.status && <span className="text-red-500 text-sm ml-2">{errors.status}</span>}
                   </label>
                   <select

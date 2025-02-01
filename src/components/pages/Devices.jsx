@@ -32,6 +32,7 @@ const Devices = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const devicesPerPage = 10;
   const [showSessionExists, setShowSessionExists] = useState(false);
+  const backendUrl = process.env.NEXT_PUBLIC_API_URL;
 
   useEffect(() => {
     setIsMounted(true);
@@ -50,7 +51,7 @@ const Devices = () => {
   const socketRef = useRef(null);
 
   useEffect(() => {
-    const newSocket = io('http://localhost:8000', {
+    const newSocket = io(`${backendUrl}`, {
       credentials: 'include',
       // autoConnect : false,
     });
@@ -149,7 +150,7 @@ const Devices = () => {
 
   const fetchDevices = async () => {
     try {
-      const response = await fetch('http://localhost:8000/api/device', {
+      const response = await fetch(`${backendUrl}/device`, {
         method: 'GET',
         credentials: 'include',
         headers: {
@@ -172,7 +173,7 @@ const Devices = () => {
     try {
       setDetailsLoading(true);
       const response = await fetch(
-        `http://localhost:8000/api/device/show/${deviceId}`,
+        `${backendUrl}/device/show/${deviceId}`,
         {
           method: 'GET',
           credentials: 'include',
@@ -197,7 +198,7 @@ const Devices = () => {
     try {
       setError(null);
       setSuccess(null);
-      const response = await fetch('http://localhost:8000/api/device/create', {
+      const response = await fetch(`${backendUrl}/device/create`, {
         method: 'POST',
         credentials: 'include',
         headers: {
@@ -244,7 +245,6 @@ const Devices = () => {
     const sessions = JSON.parse(localStorage.getItem('sessions') || '{}');
 
     const sessionId = sessions[phoneNumber]?.sessionId || socketRef.current?.id;
-    console.log('sessionId>>', sessionId);
 
     const newSessions = {
       ...sessions,
@@ -259,7 +259,7 @@ const Devices = () => {
 
     try {
       const response = await fetch(
-        'http://localhost:8000/api/device/connect/startSession',
+        `${backendUrl}/device/connect/startSession`,
         {
           method: 'POST',
           credentials: 'include',
@@ -304,7 +304,7 @@ const Devices = () => {
     const sessionId = sessionData.sessionId;
     try {
       const response = await fetch(
-        'http://localhost:8000/api/device/connect/send-message',
+        `${backendUrl}/device/connect/send-message`,
         {
           method: 'POST',
           credentials: 'include',
@@ -336,7 +336,7 @@ const Devices = () => {
 
     try {
       const response = await fetch(
-        'http://localhost:8000/api/device/connect/logout',
+        `${backendUrl}/device/connect/logout`,
         {
           method: 'POST',
           credentials: 'include',
@@ -380,7 +380,7 @@ const Devices = () => {
     }
     try {
       const response = await fetch(
-        'http://localhost:8000/api/device/connect/fetch-groups',
+        `${backendUrl}/device/connect/fetch-groups`,
         {
           method: 'POST',
           credentials: 'include',
