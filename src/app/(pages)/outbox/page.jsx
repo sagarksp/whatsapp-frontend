@@ -58,7 +58,7 @@ export default function OutboxPage() {
       <h1 className="text-2xl font-bold mb-4">Outbox Messages</h1>
 
       <div className="overflow-x-auto">
-        <table className="min-w-full bg-white border border-gray-200">
+        <table className="min-w-full bg-white border border-gray-200 text-black">
           <thead>
             <tr className="bg-gray-100 text-left">
               <th className="py-2 px-4 border">Job ID</th>

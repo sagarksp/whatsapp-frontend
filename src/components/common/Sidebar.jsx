@@ -213,7 +213,7 @@ const sidebarItems = [
   { icon: DevicesIcon, text: "Devices", href: "/connectdevices" },
   { icon: SendMessageIcon, text: "Templates", href: "/templates" },
   { icon: OutboxIcon, text: "OutBox", href: "/outbox" },
-  { icon: UserIcon, text: "User Details", href: "/users" },
+  { icon: UserIcon, text: "Manage Users", href: "/users" },
 
 ];
 

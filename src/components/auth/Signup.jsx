@@ -1,93 +1,3 @@
-// 'use client';
-// import { useState } from 'react';
-// import { useRouter } from 'next/navigation';
-
-// export default function Signup() {
-//   const [email, setEmail] = useState('');
-//   const [password, setPassword] = useState('');
-//   const [confirmPassword, setconfirmPassword] = useState('');
-//   const [name, setname] = useState ("");
-//   const [userName, setuserName] = useState ("");
-//   const [phone, setphone] = useState("");
-//   const router = useRouter();
-
-//   const handleSignup = async (e) => {
-//     e.preventDefault();
-//     const res = await fetch('http://localhost:8000/api/auth/register', {
-//       method: 'POST',
-//       headers: { 'Content-Type': 'application/json' },
-//       body: JSON.stringify({ email, password, userName, name, phone, confirmPassword }),
-//     });
-
-//     if (res.ok) {
-//       router.push('/login');
-//     } else {
-//       alert('Signup failed');
-//     }
-//   };
-
-//   return (
-//     <div className="min-h-screen flex items-center justify-center bg-gray-100">
-//       <form onSubmit={handleSignup} className="bg-white p-6 rounded shadow-md w-full max-w-sm">
-//         <h2 className="text-2xl mb-4">Signup</h2>
-//         <input
-//           type="email"
-//           placeholder="Email"
-//           value={email}
-//           onChange={(e) => setEmail(e.target.value)}
-//           className="mb-4 p-2 w-full border rounded"
-//           required
-//         />
-//         <input
-//           type="password"
-//           placeholder="password"
-//           value={password}
-//           onChange={(e) => setPassword(e.target.value)}
-//           className="mb-4 p-2 w-full border rounded"
-//           required
-//         />
-//          <input
-//           type="confirmPassword"
-//           placeholder="confirmPassword"
-//           value={confirmPassword}
-//           onChange={(e) => setconfirmPassword(e.target.value)}
-//           className="mb-4 p-2 w-full border rounded"
-//           required
-//         />
-//          <input
-//           type="userName"
-//           placeholder="userName"
-//           value={userName}
-//           onChange={(e) => setuserName(e.target.value)}
-//           className="mb-4 p-2 w-full border rounded"
-//           required
-//         />
-//          <input
-//           type="phone"
-//           placeholder="phone"
-//           value={phone}
-//           onChange={(e) => setphone(e.target.value)}
-//           className="mb-4 p-2 w-full border rounded"
-//           required
-//         />
-//          <input
-//           type="name"
-//           placeholder="name"
-//           value={name}
-//           onChange={(e) => setname(e.target.value)}
-//           className="mb-4 p-2 w-full border rounded"
-//           required
-//         />
-//         <button type="submit" className="w-full bg-blue-500 text-white p-2 rounded">
-//           Signup
-//         </button>
-//       </form>
-//     </div>
-//   );
-// }
-
-
-
 'use client';
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
@@ -109,6 +19,7 @@ export default function Signup() {
   const router = useRouter();
   const [isMounted, setIsMounted] = useState(false);
 
+  const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8000';
 
   useEffect(() => {
     setIsMounted(true);
@@ -165,7 +76,7 @@ export default function Signup() {
     }
 
     try {
-      const res = await fetch('http://localhost:8000/api/auth/register', {
+      const res = await fetch(`${backendUrl}/auth/register`, {
         method: 'POST',
         credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
