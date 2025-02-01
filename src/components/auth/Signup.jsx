@@ -19,7 +19,7 @@ export default function Signup() {
   const router = useRouter();
   const [isMounted, setIsMounted] = useState(false);
 
-  const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8000';
+  const backendUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
   useEffect(() => {
     setIsMounted(true);
