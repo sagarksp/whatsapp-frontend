@@ -33,6 +33,7 @@ const Devices = () => {
   const devicesPerPage = 10;
   const [showSessionExists, setShowSessionExists] = useState(false);
   const backendUrl = process.env.NEXT_PUBLIC_API_URL;
+  const baseUrl = process.env.NEXT_PUBLIC_MAIN_URL
 
   useEffect(() => {
     setIsMounted(true);
@@ -51,7 +52,7 @@ const Devices = () => {
   const socketRef = useRef(null);
 
   useEffect(() => {
-    const newSocket = io(`${backendUrl}`, {
+    const newSocket = io(`${baseUrl}`, {
       credentials: 'include',
       // autoConnect : false,
     });
