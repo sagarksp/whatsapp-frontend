@@ -131,6 +131,17 @@ const Devices = () => {
       // refresh the page forcefully
     });
 
+    newSocket.on('force-logout',(sessionId) =>{
+      setIsConnected(false);
+      setConnectedDevicePhone(null);
+      setStatusMessage('Force logout detected');
+      
+      // remove the local storage too 
+      const sessions = JSON.parse(localStorage.getItem('sessions') || '{}');
+      delete sessions[sessionId];
+      localStorage.setItem('sessions', JSON.stringify(sessions));
+    });
+
     setSocket(newSocket);
 
     return () => {
@@ -152,23 +163,42 @@ const Devices = () => {
   const fetchDevices = async () => {
     try {
       const response = await fetch(`${backendUrl}/device`, {
-        method: 'GET',
-        credentials: 'include',
+        method: "GET",
+        credentials: "include",
         headers: {
-          Authorization: `Bearer ${localStorage.getItem('token')}`,
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
         },
       });
-
+  
       const data = await response.json();
-      if (!response.ok)
-        throw new Error(data.message || 'Failed to fetch devices');
+      if (!response.ok) throw new Error(data.message || "Failed to fetch devices");
+  
       setDevices(data.data || []);
+  
+      // Get current sessions from localStorage
+      const sessions = JSON.parse(localStorage.getItem("sessions") || "{}");
+      let updated = false; // Track if we actually modify localStorage
+  
+      // Loop through devices and remove offline ones from sessions
+      data.data.forEach((device) => {
+        if (device.status === "offline" && sessions[device.devicePhone]) {
+          delete sessions[device.devicePhone];
+          console.log(`Removed ${device.devicePhone} from localStorage sessions`);
+          updated = true; // Mark that we made a change
+        }
+      });
+  
+      // Only update localStorage if we made changes
+      if (updated) {
+        localStorage.setItem("sessions", JSON.stringify(sessions));
+      }
+  
     } catch (error) {
       setError(error.message);
     } finally {
       setLoading(false);
     }
-  };
+  };  
 
   const fetchDeviceDetails = async (deviceId) => {
     try {
